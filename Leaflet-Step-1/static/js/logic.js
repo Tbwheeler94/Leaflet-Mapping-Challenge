@@ -1,4 +1,4 @@
-// Create the tile layer that will be the background of our map
+// Create light background tile layer
 var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}", {
   attribution: "Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"http://mapbox.com\">Mapbox</a>",
   maxZoom: 18,
@@ -6,7 +6,7 @@ var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/til
   accessToken: API_KEY
 });
 
-// Initialize all of the LayerGroups we'll be using
+// Initialize layer groups for different Earthquake strengths to be able to toggle them on and off
 var layers = {
   ZERO_TO_ONE: new L.LayerGroup(),
   ONE_TO_TWO: new L.LayerGroup(),
@@ -16,7 +16,7 @@ var layers = {
   FIVE_TO_MORE: new L.LayerGroup()
 };
 
-// Create the map with our layers
+// Create the map and include layers
 var map = L.map("map", {
   center: [38.708, 102.036288],
   zoom: 2,
@@ -30,7 +30,7 @@ var map = L.map("map", {
   ]
 });
 
-// Add our 'lightmap' tile layer to the map
+// Add 'lightmap' tile layer to the map
 lightmap.addTo(map);
 
 // Create an overlays object to add to the layer control
@@ -43,10 +43,10 @@ var overlays = {
   "5 to 6": layers.FIVE_TO_MORE
 };
 
-// Create a control for our layers, add our overlay layers to it
+// Create a control for the layers and add to the map
 L.control.layers(null, overlays).addTo(map);
 
-// Initialize an object containing icons for each layer group
+// Create object with circle specifications for each earthquake size
 var circles = {
   ZERO_TO_ONE: {
     color: '#66ff33',
@@ -85,47 +85,47 @@ var circles = {
     radius: 7000
 }};
 
-// Perform an API call to the Citi Bike Station Information endpoint
+// Perform an API call to the GEOJSON file
 d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson", function(quakeData) {
 
-    // Initialize a stationStatusCode, which will be used as a key to access the appropriate layers, icons, and station count for layer group
+    // Initialize a quakeSize variable, which will be used as a key to access the appropriate layers, icons, and earthquake size for layer group
     var quakeSize;
 
-    // Loop through the stations (they're the same size and have partially matching data)
+    // Loop through the quakeData
     for (var i = 0; i < quakeData.features.length; i++) {
 
-      // If a station is listed but not installed, it's coming soon
+      // If an earthquake magnitude is between 0 and 1, set quakeSize to ZERO_TO_ONE
       if (quakeData.features[i].properties.mag < 1) {
         quakeSize = "ZERO_TO_ONE";
       }
-      // If a station has no bikes available, it's empty
+      // If an earthquake magnitude is between 1 and 2, set quakeSize to ONE_TO_TWO
       else if (quakeData.features[i].properties.mag < 2 && quakeData.features[i].properties.mag > 1) {
         quakeSize = "ONE_TO_TWO";
       }
-      // If a station is installed but isn't renting, it's out of order
+      // If an earthquake magnitude is between 2 and 3, set quakeSize to TWO_TO_THREE
       else if (quakeData.features[i].properties.mag < 3 && quakeData.features[i].properties.mag > 2) {
         quakeSize = "TWO_TO_THREE";
       }
-      // If a station has less than 5 bikes, it's status is low
+      // If an earthquake magnitude is between 3 and 4, set quakeSize to THREE_TO_FOUR
       else if (quakeData.features[i].properties.mag < 4 && quakeData.features[i].properties.mag > 3) {
         quakeSize = "THREE_TO_FOUR";
       }
-      // If a station has less than 5 bikes, it's status is low
+      // If an earthquake magnitude is between 4 and 5, set quakeSize to FOUR_TO_FIVE
       else if (quakeData.features[i].properties.mag < 5 && quakeData.features[i].properties.mag > 4) {
         quakeSize = "FOUR_TO_FIVE";
       }
-      // Otherwise the station is normal
+      // Otherwise the magnitude is greater than 5
       else {
         quakeSize = "FIVE_TO_MORE";
       }
 
-      // Create a new marker with the appropriate icon and coordinates
+      // Create a new circle with the appropriate icon and coordinates
       var newMarker = L.circle([quakeData.features[i].geometry.coordinates[1], quakeData.features[i].geometry.coordinates[0]], circles[quakeSize]);
 
-      // Add the new marker to the appropriate layer
+      // Add the new circle to the appropriate layer
       newMarker.addTo(layers[quakeSize]);
 
-      // Bind a popup to the marker that will  display on click. This will be rendered as HTML
+      // Bind a popup to the marker that will display on click. This will be rendered as HTML
       newMarker.bindPopup("Quake Location: " + quakeData.features[i].properties.place + "<br> Quake Size: " + quakeData.features[i].properties.mag);
     }
     
