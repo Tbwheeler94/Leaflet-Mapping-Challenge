@@ -125,11 +125,13 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
       // Add the new circle to the appropriate layer
       newMarker.addTo(layers[quakeSize]);
 
-      // Bind a popup to the marker that will display on click. This will be rendered as HTML
+      // Bind a popup to the marker that will display location and magnitude.
       newMarker.bindPopup("Quake Location: " + quakeData.features[i].properties.place + "<br> Quake Size: " + quakeData.features[i].properties.mag);
     }
     
   });
+
+// Create function to select square color based on number in the array
 
   function getColor(d) {
     return d < 1? '#66ff33':
@@ -141,13 +143,20 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
     '#ff0000';
     };
 
+    // Create legend and move to the bottom right
     var legend = L.control({position: 'bottomright'});
 
+    // Initialize legend to page when created
     legend.onAdd = function (map) { 
 
+    // Create div for legend with class of info and legend, correlating to css properties
     var div = L.DomUtil.create('div', 'info legend')
+
+    // Add Earthquake Strength label to top
     labels = ['<strong>Earthquake Strength</strong>'],
     grades = [0,1,2,3,4,5];
+
+    // Generate colored boxes and mag size ranges to legend
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML += 
         '<i style=background:' + getColor(grades[i]) + '></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
@@ -156,6 +165,7 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
         return div;
         };
 
+    // Add legend to the map
     legend.addTo(map);
 
     
